@@ -1,0 +1,7 @@
+RepluskCode/.pio
+RepluskCode/.vscode/.browse.c_cpp.db*
+RepluskCode/.vscode/c_cpp_properties.json
+RepluskCode/.vscode/launch.json
+RepluskCode/.vscode/ipch
+RepluskCode/data/MqttConfig.txt
+*~

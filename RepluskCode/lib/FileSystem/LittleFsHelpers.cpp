@@ -1,9 +1,7 @@
-#include "CommandLine/ComLineConfig.h"
-#include "CommandLine/CommandLine.h"
-#include "LittleFsHelpers.h"
-#include "Sensors/Measurement.h"
+#include <LittleFsHelpers.h>
 #include <Config.h>
-#include <Wifi/MqLog.h>
+#include <Logger.h>
+
 
 namespace nvm {
 
@@ -18,7 +16,7 @@ LittleFsHelpers::LittleFsHelpers() : _LittleFS{LittleFS} {}
 
 void LittleFsHelpers::initHardware() {
   if (!LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)) {
-    MqLog("LittleFS Mount Failed\n");
+    Logger::Log("LittleFS Mount Failed\n");
   }
 }
 
@@ -26,7 +24,7 @@ void LittleFsHelpers::readConfigFile(const char *filename) {
   // Read file line by line
   File file = LittleFS.open(filename);
   if (!file || file.isDirectory()) {
-    MqLog("Failed to open idTableFile.\n");
+    Logger::Log("Failed to open idTableFile.\n");
     return;
   }
   while (file.available()) {
@@ -46,83 +44,51 @@ void LittleFsHelpers::readConfigFile(const char *filename) {
   file.close();
 }
 
-bool LittleFsHelpers::saveSensIdTable(
-    msmnt::MeasurementPivot *measurementPivot) {
-
-  File file = LittleFS.open(idTableFile, FILE_APPEND);
-  if (!file || file.isDirectory()) {
-    MqLog("Failed to open idTableFile.\n");
-    return false;
-  }
-
-  measurementPivot->ResetIter();
-  msmnt::Measurement *actMsmnt = measurementPivot->GetNextMeasurement();
-  while (actMsmnt != nullptr) {
-    if (actMsmnt->configChanged) {
-
-      char msgBuff[cLine::COMMAND_BUFFER_LEN];
-      actMsmnt->GetConfigAsCmd(msgBuff);
-
-      String message = String(msgBuff);
-
-      if (file.print(message)) {
-        actMsmnt->configChanged = false;
-      } else {
-        MqLog("- append failed\n");
-        return false;
-      }
-    }
-    actMsmnt = measurementPivot->GetNextMeasurement();
-  }
-  file.close();
-  return true;
-}
-
 void LittleFsHelpers::listDir(const char *dirname, uint8_t levels) {
-  MqLog("Listing directory: %s\r\n", dirname);
+  Logger::Log("Listing directory: %s\r\n", dirname);
 
   File root = _LittleFS.open(dirname);
   if (!root) {
-    MqLog("- failed to open directory\n");
+    Logger::Log("- failed to open directory\n");
     return;
   }
   if (!root.isDirectory()) {
-    MqLog(" - not a directory\n");
+    Logger::Log(" - not a directory\n");
     return;
   }
 
   File file = root.openNextFile();
   while (file) {
     if (file.isDirectory()) {
-      MqLog("  DIR: %s\n", file.name());
+      Logger::Log("  DIR: %s\n", file.name());
       if (levels) {
         listDir(file.path(), levels - 1);
       }
     } else {
-      MqLog("  FILE: %s\tSIZE: %lu\n", file.name(), file.size());
+      Logger::Log("  FILE: %s\tSIZE: %lu\n", file.name(), file.size());
     }
     file = root.openNextFile();
   }
 }
 
 void LittleFsHelpers::createDir(const char *path) {
-  MqLog("Creating Dir: %s\n", path);
+  Logger::Log("Creating Dir: %s\n", path);
   if (!_LittleFS.mkdir(path)) {
-    MqLog("mkdir failed\n");
+    Logger::Log("mkdir failed\n");
   }
 }
 
 void LittleFsHelpers::removeDir(const char *path) {
-  MqLog("Removing Dir: %s\n", path);
+  Logger::Log("Removing Dir: %s\n", path);
   if (!_LittleFS.rmdir(path)) {
-    MqLog("rmdir failed\n");
+    Logger::Log("rmdir failed\n");
   }
 }
 
 void LittleFsHelpers::readFile(const char *path) {
   File file = _LittleFS.open(path);
   if (!file || file.isDirectory()) {
-    MqLog("- failed to open file for reading\n");
+    Logger::Log("- failed to open file for reading\n");
     return;
   }
 
@@ -134,7 +100,7 @@ void LittleFsHelpers::readFile(const char *path) {
       line += '\n';
     }
     
-    MqLog("%s", line.c_str());
+    Logger::Log("%s", line.c_str());
     delay(20);
   }
   file.close();
@@ -143,11 +109,11 @@ void LittleFsHelpers::readFile(const char *path) {
 void LittleFsHelpers::writeFile(const char *path, const char *message) {
   File file = _LittleFS.open(path, FILE_WRITE);
   if (!file) {
-    MqLog("- failed to open file for writing\n");
+    Logger::Log("- failed to open file for writing\n");
     return;
   }
   if (!file.print(message)) {
-    MqLog("- write failed\n");
+    Logger::Log("- write failed\n");
   }
   file.close();
 }
@@ -155,26 +121,26 @@ void LittleFsHelpers::writeFile(const char *path, const char *message) {
 void LittleFsHelpers::appendFile(const char *path, const char *message) {
   File file = _LittleFS.open(path, FILE_APPEND);
   if (!file) {
-    MqLog("- failed to open file for appending\n");
+    Logger::Log("- failed to open file for appending\n");
     return;
   }
   if (!file.print(message)) {
-    MqLog("- append failed\n");
+    Logger::Log("- append failed\n");
   }
   file.close();
 }
 
 void LittleFsHelpers::renameFile(const char *path1, const char *path2) {
-  MqLog("Renaming file %s to %s\r\n", path1, path2);
+  Logger::Log("Renaming file %s to %s\r\n", path1, path2);
   if (!_LittleFS.rename(path1, path2)) {
-    MqLog("- rename failed\n");
+    Logger::Log("- rename failed\n");
   }
 }
 
 void LittleFsHelpers::deleteFile(const char *path) {
-  MqLog("Deleting file: %s\r\n", path);
+  Logger::Log("Deleting file: %s\r\n", path);
   if (!_LittleFS.remove(path)) {
-    MqLog("- delete failed\n");
+    Logger::Log("- delete failed\n");
   }
 }
 } // namespace nvm

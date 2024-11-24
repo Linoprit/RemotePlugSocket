@@ -34,7 +34,7 @@ public:
   }
   void stopWifi() { WiFi.disconnect(); }
 
-  void pubishMeasurements(msmnt::MeasurementPivot *measurementPivot);
+  //void pubishMeasurements(msmnt::MeasurementPivot *measurementPivot);
   int publishLog(uint8_t *message, uint16_t size);
   int publishLog(std::string message);
   void printMqttConf();
@@ -52,6 +52,7 @@ private:
   char *_mqttPubSens;
   char *_mqttPubLog;
   bool _DoSerialPrint;
+  bool _mqttIsConnected;
 
   void copyMqttPath(char *buffer, std::string spot, const char *mqttSuffix,
                     size_t mqttLen);

@@ -5,3 +5,6 @@ RepluskCode/.vscode/launch.json
 RepluskCode/.vscode/ipch
 RepluskCode/data/MqttConfig.txt
 *~
+/Schematics/RemotePlugSocket/RemotePlugSocket-backups
+fp-info-cache
+/Schematics/RemotePlugSocket/report.txt

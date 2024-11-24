@@ -46,7 +46,7 @@ void onMqttConnect(bool sessionPresent) {
   Logger::Log("Subscribing to '%s', got ID %lu\n",
         wifi::MqttHelper::instance()._mqttSubCmd, result);
 
-  gpio::GpioInOut::instance().setLedConnected();
+  //gpio::GpioInOut::instance().setLedConnected();
 }
 
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
@@ -54,7 +54,7 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
   if (WiFi.isConnected()) {
     xTimerStart(mqttReconnectTimer, 0);
   }
-  gpio::GpioInOut::instance().clrLedConnected();
+  //gpio::GpioInOut::instance().clrLedConnected();
 }
 
 void onMqttPublish(uint16_t packetId) { MqLog("Pub ack. Id: %lu\n", packetId); }
@@ -62,7 +62,6 @@ void onMqttPublish(uint16_t packetId) { MqLog("Pub ack. Id: %lu\n", packetId); }
 void connectToWifi() {
   Logger::Log("Reconnecting to Wi-Fi...\n");
   nvm::LittleFsHelpers::instance().readMqttConf();
-  // WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 }
 
 void onMqttMessage(char *topic, char *payload,

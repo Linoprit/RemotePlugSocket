@@ -9,6 +9,7 @@
 #define SYSTEM_COMLINEHISTORY_H_
 
 #include "ComLineConfig.h"
+#include <Lexer.h>
 
 namespace cLine {
 

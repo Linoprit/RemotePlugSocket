@@ -5,7 +5,8 @@
  *      Author: harald
  */
 
-#include <CommandLine/History.h>
+#include <History.h>
+
 
 namespace cLine {
 

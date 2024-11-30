@@ -5,18 +5,22 @@
  *      Author: harald
  */
 
-#include <CommandLine/CommandLine.h>
-#include <CommandLine/Interpreter.h>
-#include "Wifi/MqttHelper.h"
-#include <CommandLine/ComLineConfig.h>
+#include <CommandLine.h>
+#include "CommandLine/Interpreter.h"
+#include <Measurement.h>
+#include <MqttHelper.h>
+#include <ComLineConfig.h>
 #include <CrcSocket.h>
+#include <DigitalIo/DigitalIo.h>
 #include <LittleFsHelpers.h>
 #include <IPAddress.h>
 #include <OsHelpers.h>
+#include <Sensors.h>
 #include <Logger.h>
 #include <cstring>
 
 namespace cLine {
+using namespace msmnt;
 
 Interpreter::Interpreter() {}
 
@@ -32,10 +36,14 @@ bool Interpreter::doit(CmdBufferType comLine) {
 
   //@formatter:off
   // clang-format off
-  if (cmd == 1050090700) {    result = calcHash(&lex);  				} // calcHash
+  if 			(cmd == 2358927868)	{    result = setSensId(&lex);  			} // setSensId
+  else if (cmd == 1050090700) {    result = calcHash(&lex);  				} // calcHash
+  else if (cmd == 3913104177) {    result = getSensIdTable(&lex);  	} // getSensIdTable
   else if (cmd == 2948963465) {    result = getStationId(&lex);  		} // getStationId
+  else if (cmd == 1213712647) {    result = printMeasures(&lex);    } // printMeasures
   else if (cmd == 1996702945) {    result = listDir(&lex);          } // listDir
   else if (cmd == 3796804437) {    result = readFile(&lex);         } // readFile  
+  else if (cmd == 2221071754) {    result = saveSensIdTable(&lex);  } // saveSensIdTable
   
   else if (cmd == 1759482888) {    result = getMacAddress();        } // getMacAddress
   else if (cmd == 3926160061) {    result = setMqttHost(&lex);      } // setMqttHost
@@ -45,10 +53,13 @@ bool Interpreter::doit(CmdBufferType comLine) {
   else if (cmd == 3570528819) {    result = setMqttSpot(&lex);      } // setMqttSpot
   else if (cmd == 477230859)  {    result = getMqttConf();          } // getMqttConf
 
-  else if (cmd == 2393500523)  {    result = storeWifi(&lex);       } // storeWifi
-  else if (cmd == 4252320804)  {    result = storeMqttSpot(&lex);   } // storeMqttSpot
-  else if (cmd == 3509612507)  {    result = storeMqttHost(&lex);   } // storeMqttHost
-  else if (cmd == 3851424486)  {    result = storeMqttPort(&lex);   } // storeMqttPort
+  else if (cmd == 2393500523) {    result = storeWifi(&lex);        } // storeWifi
+  else if (cmd == 4252320804) {    result = storeMqttSpot(&lex);    } // storeMqttSpot
+  else if (cmd == 3509612507) {    result = storeMqttHost(&lex);    } // storeMqttHost
+  else if (cmd == 3851424486) {    result = storeMqttPort(&lex);    } // storeMqttPort
+
+  else if (cmd == 306019344)  {    result = doMsmntCycle(&lex);     } // cycle
+  else if (cmd == 2008527735) {    result = doSwitch(&lex);         } // switch
 
   else if (cmd == 959926194) 	{    result = shutup();  							} // shutup
   else if (cmd == 1639364146) {    result = talk();  								} // talk
@@ -59,7 +70,11 @@ bool Interpreter::doit(CmdBufferType comLine) {
 																	 result = true;										} //	clear
   // clang-format on
   //@formatter:on
-  
+
+  // setSensId example
+  // cmd       ID (hash)	min   max  	type  rel  shortname (8 bytes)
+  // setSensId 3822322055 10.0  12.5  0   	1    "Test 007"
+
   return result;
 }
 
@@ -133,6 +148,41 @@ bool Interpreter::storeMqttPort(Lexer *lex) {
 
   nvm::LittleFsHelpers::instance().appendFile(mqttConfFile, buff);
 
+  return true;
+}
+
+bool Interpreter::doSwitch(Lexer *lex) {
+  bool isError = false;
+  UInt64Token *intToken = (UInt64Token *)lex->getNextToken();
+  if (intToken->getType() != Token::UInt64) {
+    isError = true;
+  }
+  uint16_t relayNr = (uint16_t)intToken->getVal();
+
+  intToken = (UInt64Token *)lex->getNextToken();
+  if (intToken->getType() != Token::UInt64) {
+    isError = true;
+  }
+  uint16_t onOrOff = (uint16_t)intToken->getVal();
+
+  if ((relayNr > 3) || (onOrOff > 1)) {
+    isError = true;
+  }
+
+  if (isError) {
+    Logger::Log("\nUsage: switch <int RelayNr> <int on/off>.");
+    return false;
+  } else {
+    digitIo::DigitalIo::SetRelayState(relayNr, onOrOff);
+    
+    bool state = digitIo::DigitalIo::GetRelayState(relayNr);
+    wifi::MqttHelper::instance().reportRelayState(relayNr, state); 
+  }
+  return true;
+}
+
+bool Interpreter::doMsmntCycle(Lexer *lex) {
+  msmnt::Sensors::instance().cycle();
   return true;
 }
 
@@ -228,6 +278,20 @@ bool Interpreter::talk() {
   return true;
 }
 
+bool Interpreter::printMeasures(Lexer *lex) {
+  msmnt::MeasurementPivot *measurementPivot =
+      msmnt::Sensors::instance().getMeasurementPivot();
+
+  if (measurementPivot == nullptr) {
+    Logger::Log("\nmeasurementPivot is null.\n");
+    return false;
+  } else {
+    Logger::Log("\n");
+    measurementPivot->Dump();
+  }
+  return true;
+}
+
 bool Interpreter::listDir(Lexer *lex) {
   Logger::Log("\n");
   nvm::LittleFsHelpers::instance().listDir("/", 3);
@@ -246,6 +310,10 @@ bool Interpreter::readFile(Lexer *lex) {
   return true;
 }
 
+bool Interpreter::saveSensIdTable(Lexer *lex) {
+  return msmnt::Sensors::instance().saveSensorIdTable();
+}
+
 bool Interpreter::calcHash(Lexer *lex) {
   CmdToken *cmdToken = (CmdToken *)lex->getNextToken();
   if (cmdToken->getType() != Token::Command) {
@@ -257,13 +325,70 @@ bool Interpreter::calcHash(Lexer *lex) {
   return true;
 }
 
+bool Interpreter::getSensIdTable(Lexer *lex) {
+  nvm::LittleFsHelpers::instance().readFile(idTableFile);
+  return true;
+}
+
 bool Interpreter::getStationId(Lexer *lex) {
   uint64_t sensorId = 0;
   uint8_t *mac = (uint8_t *)&sensorId; // the last two bytes should stay empty
   OsHelpers::GetMacAddress(mac);
-  std::string stationId = Logger::DumpSensId(sensorId);
+  std::string stationId = msmnt::Measurement::DumpSensId(sensorId);
 
   Logger::Log("\nStation ID = %llu (%s)\n", sensorId, stationId.c_str());
+  return true;
+}
+
+bool Interpreter::setSensId(Lexer *lex) {
+  SensorConfigType sensConf;
+
+  UInt64Token *intToken = (UInt64Token *)lex->getNextToken();
+  if (intToken->getType() != Token::UInt64) {
+    return false;
+  }
+  sensConf.sensorId = intToken->getVal();
+
+  FltToken *fltToken = (FltToken *)lex->getNextToken();
+  if (fltToken->getType() != Token::Float) {
+    return false;
+  }
+  sensConf.minVal = fltToken->getVal();
+
+  fltToken = (FltToken *)lex->getNextToken();
+  if (fltToken->getType() != Token::Float) {
+    return false;
+  }
+  sensConf.maxVal = fltToken->getVal();
+
+  intToken = (UInt64Token *)lex->getNextToken();
+  if (intToken->getType() != Token::UInt64) {
+    return false;
+  }
+  sensConf.sensType = static_cast<Measurement::SensorType>(intToken->getVal());
+
+  intToken = (UInt64Token *)lex->getNextToken();
+  if (intToken->getType() != Token::UInt64) {
+    return false;
+  }
+  sensConf.relayNr = static_cast<Measurement::RelayChannel>(intToken->getVal());
+
+  ChrToken *chrToken = (ChrToken *)lex->getNextToken();
+  if (chrToken->getType() != Token::String) {
+    return false;
+  }
+  msmnt::Measurement::CopyToShortname(sensConf.shortname, chrToken->getVal());
+
+  bool success =
+      msmnt::Sensors::instance().getMeasurementPivot()->UpdateConfig(sensConf);
+
+  if (success) {
+    Logger::Log("\nUpdateConfig done.\n");
+  } else {
+    std::string stationId = msmnt::Measurement::DumpSensId(sensConf.sensorId);
+    Logger::Log("\nSensId ignored: %llu (%s)\n",sensConf.sensorId, stationId.c_str());
+  }
+
   return true;
 }
 

@@ -1,7 +1,7 @@
 #ifndef LITTLEFSHELPERS_H
 #define LITTLEFSHELPERS_H
 
-//#pragma once
+#pragma once
 
 // https://raw.githubusercontent.com/RuiSantosdotme/Random-Nerd-Tutorials/master/Projects/ESP32/ESP32_Testing_LittleFS.ino
 // Adapted from:
@@ -13,6 +13,7 @@
 #include <FS.h>
 #include <LittleFS.h>
 #include <Config.h>
+#include <MeasurementPivot.h>
 
 //  You only need to format LittleFS the first time you run a
 //  test or else use the LITTLEFS plugin to create a partition
@@ -35,6 +36,8 @@ public:
   static LittleFsHelpers &instance(void);
 
   void readConfigFile(const char *filename);
+  void readIdTable() { readConfigFile(idTableFile); };
+  bool saveSensIdTable(msmnt::MeasurementPivot *measurementPivot);
   void readMqttConf() { readConfigFile(mqttConfFile); };
 
   void listDir(const char *dirname, uint8_t levels);

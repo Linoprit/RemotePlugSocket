@@ -3835,7 +3835,7 @@
     (uuid 0dacc5dd-f0ca-425c-9d34-09603bc6aa1e)
   )
   (text "Status LED:\nOn		Ready, Automatic Mode\nBlink	No Connection\nOff		Manually On, \n		Relay-Board -> All LEDs on\nOff		Manually Off, \n		Relay-Board -> All LEDs off\n"
-    (at 128.27 154.94 0)
+    (at 128.27 151.13 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 2846e830-3af0-4c15-b22e-cafe80a38b69)
   )
@@ -3856,8 +3856,8 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 803a8433-f7ee-4fee-8e08-02d61a88fdb3)
   )
-  (text "-> Long Push -> Manually on\n|    |\n|    v\n|  Long Push -> Manually Off\n|    |\n|    v\n <- ..."
-    (at 128.27 193.04 0)
+  (text "-> Long Push -> Manually on\n|    |\n|    v\n|  Long Push -> Manually Off\n|    |\n|    v\n|  Long Push -> Auto\n|    |\n|    v\n <- ..."
+    (at 128.27 196.85 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 9fb79f4d-3103-4a67-abfd-754c137fa055)
   )
@@ -3870,7 +3870,7 @@
     (uuid f7711c8e-fb94-43c4-95bd-484181487b89)
   )
   (text "Button:\n-> Push -> Auto, Scene 1\n|    |\n|    v\n|  Push -> Auto, Scene 2\n|    |\n|    v\n <- ..."
-    (at 128.27 176.53 0)
+    (at 128.27 172.72 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid fcdfcd54-d1b7-41a3-9995-cf1337f7e8b8)
   )

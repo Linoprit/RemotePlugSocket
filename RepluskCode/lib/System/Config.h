@@ -22,7 +22,7 @@ constexpr uint8_t DS18B20_PRECISION = 12;
 // constexpr uint8_t DS18B20_PRECISION = 9;
 
 //
-// TODO: below values are unused. 
+// TODO: check, if below values are used. 
 
 constexpr uint8_t DS18B20_SEARCH_RETRIES = 6;
 constexpr uint8_t DS18B20_MAX_DEVICES = 5; // in one channel
@@ -45,13 +45,17 @@ constexpr uint32_t MEASUREMENT_TIMEOUT_SEC = 300;
 
 // ******* BME280 *******
 // constexpr uint8_t BME280_I2CADDR = 0xEC // 0x76<<1	SDO -> GND
-constexpr uint8_t BME280_I2CADDR = 0x77; // 0x77<<1	SDO -> VCC
-// constexpr uint8_t BME280_I2C_CHANNEL = 1; // not us                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY<QQQQQQQ  DSS9^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^SQ1RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR^QQQQQQQQQ  QRFAS Yed, I2C_1 is default
+// constexpr uint8_t BME280_I2CADDR = 0x77; // 0x77<<1	SDO -> VCC
+// constexpr uint8_t BME280_I2C_CHANNEL = 1; // not used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY<QQQQQQQ  DSS9^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^SQ1RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR^QQQQQQQQQ  QRFAS Yed, I2C_1 is default
 // I2C_1, SDA_PIN = 21, SCL_PIN = 22
 
 // float getSealevelForAltitude()
 //    const {return (float) _bme280_data.pressure / 100.0 / pow(1.0 - (_altitude
 //    / 44330.0), 5.255);}
+
+// ******* BH1750 *******
+constexpr uint8_t BH1750_I2CADDR = 0x23; // Default, AddrPin GND
+//bconstexpr uint8_t BH1750_I2CADDR = 0x5c; // AddrPin VCC
 
 // ******* Filenames *******
 constexpr char idTableFile[] = "/ID_Table_U64.txt";

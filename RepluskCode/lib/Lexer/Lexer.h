@@ -9,7 +9,7 @@
 #define FRAMEWORK_SYSTEM_COMMANDLINE_LEXER_H_
 
 #include "Token.h"
-#include "CommandLine/ComLineConfig.h"
+#include <ComLineConfig.h>
 
 namespace cLine {
 

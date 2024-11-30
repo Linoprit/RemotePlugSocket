@@ -1,0 +1,2 @@
+setSensId 3819360075636145960 -12.5 -12.7 0 0 "BueroTmp"
+setSensId 504627954331409356 0.0 0.0 4 0 "BueroLgt"

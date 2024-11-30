@@ -1,13 +1,17 @@
-#include <Wifi/MqttHelper.h>
 #include <AppTypes.h>
 #include <Arduino.h>
 #include <AsyncMqttClient.h>
-#include <WiFi.h>
-#include <OsHelpers.h>
+#include <CommandLine.h>
+#include <LittleFsHelpers.h>
 #include <Logger.h>
-
+#include <MeasurementPivot.h>
+#include <MqttHelper.h>
+#include <OsHelpers.h>
+#include <WiFi.h>
 
 namespace wifi {
+
+using namespace msmnt;
 
 /// begin Mqtt callbacks and timer
 AsyncMqttClient mqttClient;
@@ -23,8 +27,9 @@ void WiFiEvent(WiFiEvent_t event) {
   // Serial.printf("[WiFi-event] event: %d\n", event);
   switch (event) {
   case SYSTEM_EVENT_STA_GOT_IP:
-    Logger::Log("\nWIFI is connected, local IP: %i.%i.%i.%i\n", WiFi.localIP()[0],
-          WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);
+    Logger::Log("\nWIFI is connected, local IP: %i.%i.%i.%i\n",
+                WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2],
+                WiFi.localIP()[3]);
     connectToMqtt();
     break;
   case SYSTEM_EVENT_STA_DISCONNECTED:
@@ -44,9 +49,9 @@ void onMqttConnect(bool sessionPresent) {
       mqttClient.subscribe(wifi::MqttHelper::instance()._mqttSubCmd, 1);
 
   Logger::Log("Subscribing to '%s', got ID %lu\n",
-        wifi::MqttHelper::instance()._mqttSubCmd, result);
+              wifi::MqttHelper::instance()._mqttSubCmd, result);
 
-  //gpio::GpioInOut::instance().setLedConnected();
+  // gpio::GpioInOut::instance().setLedConnected();
 }
 
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
@@ -54,10 +59,12 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
   if (WiFi.isConnected()) {
     xTimerStart(mqttReconnectTimer, 0);
   }
-  //gpio::GpioInOut::instance().clrLedConnected();
+  // gpio::GpioInOut::instance().clrLedConnected();
 }
 
-void onMqttPublish(uint16_t packetId) { MqLog("Pub ack. Id: %lu\n", packetId); }
+void onMqttPublish(uint16_t packetId) {
+  Logger::Log("Pub ack. Id: %lu\n", packetId);
+}
 
 void connectToWifi() {
   Logger::Log("Reconnecting to Wi-Fi...\n");
@@ -117,21 +124,23 @@ void MqttHelper::MqttSetup() {
 
   mqttClient.setServer(_mqttHost, _mqttPort);
   // If your broker requires authentication (username and password), set them
-  // below 
-  mqttClient.setCredentials("mosquitto", "public"); // TODO make this configurable
+  // below
+  mqttClient.setCredentials("mosquitto",
+                            "public"); // TODO make this configurable
 
   WiFi.onEvent(WiFiEvent);
 }
 
 void MqttHelper::printMqttConf() {
   if (WiFi.status() == WL_CONNECTED) {
-    Logger::Log("\nWIFI is connected, local IP: %i.%i.%i.%i\n", WiFi.localIP()[0],
-          WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);
+    Logger::Log("\nWIFI is connected, local IP: %i.%i.%i.%i\n",
+                WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2],
+                WiFi.localIP()[3]);
   } else {
     Logger::Log("\nWifi is not  connected.\n");
   }
-  Logger::Log("MqttHost: %i.%i.%i.%i:%lu\n", _mqttHost[0], _mqttHost[1], _mqttHost[2],
-        _mqttHost[3], _mqttPort);
+  Logger::Log("MqttHost: %i.%i.%i.%i:%lu\n", _mqttHost[0], _mqttHost[1],
+              _mqttHost[2], _mqttHost[3], _mqttPort);
   Logger::Log("Mqtt publish sensordata: '%s'\n", _mqttPubSens);
   Logger::Log("Mqtt publish logs: '%s'\n", _mqttPubLog);
   Logger::Log("Mqtt subscribe commands: '%s'\n", _mqttSubCmd);
@@ -143,7 +152,7 @@ void MqttHelper::pubishMeasurements(MeasurementPivot *measurementPivot) {
   // uint64: 20, float: 6, spaces: 1, EOL: 1
   char buff[30];
 
-  gpio::GpioInOut::instance().tglLedDebug();
+  // digitIo::DigitalIo::TglPin(LED_DEBUG);
 
   measurementPivot->ResetIter();
   Measurement *actMeasurement = measurementPivot->GetNextMeasurement();
@@ -152,25 +161,42 @@ void MqttHelper::pubishMeasurements(MeasurementPivot *measurementPivot) {
     if ((!actMeasurement->isTimeout()) &&
         (!isnanf(actMeasurement->meanValue))) {
 
-      std::string topic = std::string(_mqttPubSens) + "/" 
-          + trim(actMeasurement->GetShortname());
+      std::string topic = std::string(_mqttPubSens) + "/" +
+                          trim(actMeasurement->GetShortname());
 
-      sprintf(buff, "{\"%s\":%.02f}\0", 
-        actMeasurement->DumpSensType().c_str(), actMeasurement->meanValue);
+      sprintf(buff, "{\"%s\":%.02f}\0", actMeasurement->DumpSensType().c_str(),
+              actMeasurement->meanValue);
 
       uint16_t packetIdPub1 = mqttClient.publish(topic.c_str(), 1, true, buff);
       publishCount++;
       // '{"temp":{value_tmp}, "prs":{value_prs}, "hum":{value_hum} }'
-      //Serial.printf("Pub on topic '%s' at QoS 1, Id: %lu\n", topic.c_str(),
+      // Serial.printf("Pub on topic '%s' at QoS 1, Id: %lu\n", topic.c_str(),
       //               packetIdPub1);
     }
     actMeasurement = measurementPivot->GetNextMeasurement();
   }
-  Logger::Log("(%lu) Published %i sensors.\n", OsHelpers::GetTickSeconds(), publishCount);
-  gpio::GpioInOut::instance().tglLedDebug();
+  Logger::Log("(%lu) Published %i sensors.\n", OsHelpers::GetTickSeconds(),
+              publishCount);
+  // digitIo::DigitalIo::TglPin(LED_DEBUG);
 }
 
-std::string MqttHelper::trim(const std::string &str, const std::string &whitespace) {
+void MqttHelper::reportRelayState(uint8_t relayNr, bool state) {
+  std::string topic =
+      std::string(_mqttPubSens) + "/switch/" + std::to_string(relayNr);
+  std::string stateStr = std::to_string(state);
+
+  mqttClient.publish(topic.c_str(), 1, true, stateStr.c_str());
+}
+
+void MqttHelper::reportRelaysAvailability(bool isAvailable) {
+  std::string topic = std::string(_mqttPubSens) + "/switch/available";
+  std::string isAvailStr = std::to_string(isAvailable);
+
+  mqttClient.publish(topic.c_str(), 1, true, isAvailStr.c_str());
+}
+
+std::string MqttHelper::trim(const std::string &str,
+                             const std::string &whitespace) {
   const auto strBegin = str.find_first_not_of(whitespace);
   if (strBegin == std::string::npos)
     return ""; // no content

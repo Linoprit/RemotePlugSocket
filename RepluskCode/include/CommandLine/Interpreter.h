@@ -9,10 +9,11 @@
 #define SYSTEM_COMMANDLINE_INTERPRETER_H_
 
 #include "Lexer.h"
+#include <ComLineConfig.h>
 
 namespace cLine {
 
-class Interpreter {
+class Interpreter : public IfcInterpreter {
 public:
   Interpreter();
   virtual ~Interpreter(){};
@@ -33,16 +34,15 @@ private:
   bool storeMqttHost(Lexer *lex);
   bool storeMqttPort(Lexer *lex);
 
+  bool doSwitch(Lexer *lex);
+  bool doMsmntCycle(Lexer *lex);
+
+  bool printMeasures(Lexer *lex);
   bool listDir(Lexer *lex);
   bool readFile(Lexer *lex);
-  
-  // bool tstRelay(Lexer *lex);
-  // bool doMsmntCycle(Lexer *lex);
-  // bool printMeasures(Lexer *lex);
-  // bool saveSensIdTable(Lexer *lex);
-  // bool setSensId(Lexer *lex);
-  // bool getSensIdTable(Lexer *lex);
-
+  bool saveSensIdTable(Lexer *lex);
+  bool setSensId(Lexer *lex);
+  bool getSensIdTable(Lexer *lex);
   bool getStationId(Lexer *lex);
   bool calcHash(Lexer *lex);
   bool shutup();

@@ -1,7 +1,7 @@
-#include <LittleFsHelpers.h>
+#include <CommandLine.h>
 #include <Config.h>
+#include <LittleFsHelpers.h>
 #include <Logger.h>
-
 
 namespace nvm {
 
@@ -32,11 +32,10 @@ void LittleFsHelpers::readConfigFile(const char *filename) {
 
     for (uint_fast8_t i = 0; i < line.length(); i++) {
       uint8_t chr = (uint8_t)line.c_str()[i];
-      xQueueSendToBack(keyBufferQueue, &chr, 50);
+      cLine::CommandLine::instance().putChar(chr);
     }
     if (line.c_str()[line.length() - 1] != cLine::_KEY_ENTER) {
-      uint8_t chr = cLine::_KEY_ENTER;
-      xQueueSendToBack(keyBufferQueue, &chr, 50);      
+      cLine::CommandLine::instance().putChar(cLine::_KEY_ENTER);
     }
 
     delay(60); // CommandLine-task must process the buffer
@@ -92,14 +91,14 @@ void LittleFsHelpers::readFile(const char *path) {
     return;
   }
 
-  Serial.println(); 
+  Logger::Log("\n");
   while (file.available()) {
     String line = file.readStringUntil('\n');
 
-    if (line.c_str()[line.length() - 1] != '\n' ){
+    if (line.c_str()[line.length() - 1] != '\n') {
       line += '\n';
     }
-    
+
     Logger::Log("%s", line.c_str());
     delay(20);
   }
@@ -143,4 +142,37 @@ void LittleFsHelpers::deleteFile(const char *path) {
     Logger::Log("- delete failed\n");
   }
 }
+
+bool LittleFsHelpers::saveSensIdTable(
+    msmnt::MeasurementPivot *measurementPivot) {
+
+  File file = LittleFS.open(idTableFile, FILE_APPEND);
+  if (!file || file.isDirectory()) {
+    Logger::Log("Failed to open idTableFile.\n");
+    return false;
+  }
+
+  measurementPivot->ResetIter();
+  msmnt::Measurement *actMsmnt = measurementPivot->GetNextMeasurement();
+  while (actMsmnt != nullptr) {
+    if (actMsmnt->configChanged) {
+
+      char msgBuff[cLine::COMMAND_BUFFER_LEN];
+      actMsmnt->GetConfigAsCmd(msgBuff);
+
+      String message = String(msgBuff);
+
+      if (file.print(message)) {
+        actMsmnt->configChanged = false;
+      } else {
+        Logger::Log("- append failed\n");
+        return false;
+      }
+    }
+    actMsmnt = measurementPivot->GetNextMeasurement();
+  }
+  file.close();
+  return true;
+}
+
 } // namespace nvm

@@ -5,7 +5,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-constexpr uint16_t TX_BUFF_LEN = 1024;
+constexpr uint16_t TX_BUFF_LEN = 1280;//1024;
 
 volatile QueueHandle_t LogBufQueue = xQueueCreate(TX_BUFF_LEN, sizeof(int8_t));
 

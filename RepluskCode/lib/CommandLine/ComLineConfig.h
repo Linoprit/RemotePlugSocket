@@ -20,6 +20,11 @@ constexpr uint8_t HISTORY_DEPTH = 10;
 
 typedef std::array<uint8_t, COMMAND_BUFFER_LEN> CmdBufferType;
 
+class IfcInterpreter {
+public:
+  virtual bool doit(CmdBufferType comLine) = 0;
+};
+
 } /* namespace comLine */
 
 #endif /* SYSTEM_COMMANDLINE_COMLINECONFIG_H_ */

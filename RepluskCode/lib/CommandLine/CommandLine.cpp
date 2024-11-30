@@ -7,7 +7,7 @@
  */
 
 #include <Arduino.h>
-#include <CommandLine/CommandLine.h>
+#include <CommandLine.h>
 #include <AppTypes.h>
 #include <new>
 
@@ -18,28 +18,32 @@ volatile QueueHandle_t keyBufferQueue =
 
 namespace cLine {
 
-void CommandLine::init() { new (&instance()) CommandLine(); }
+void CommandLine::init(IfcInterpreter* interpreter) { 
+  new (&instance()) CommandLine(interpreter); 
+  }
 
 CommandLine &CommandLine::instance(void) {
   static CommandLine commandLine;
   return commandLine;
 }
 
-CommandLine::CommandLine() : _cmdPos(0), _keyBufferQueue(keyBufferQueue) {
+CommandLine::CommandLine(IfcInterpreter* interpreter) : 
+              _cmdPos(0), _keyBufferQueue(keyBufferQueue) {
   _flagInitIsDone = false;
   _cmdBuffer.fill('\0');
+  _interpreter = interpreter;
   // termDisplayClear();
 }
 
 void CommandLine::splash(void) {
   termHighLight();
   // termResetCursor();
-  Serial.printf("\n\n*****************************************\n");
-  Serial.printf("**    Stm32 Command Line Interpreter   **\n");
-  Serial.printf("**            V1.0 / 2021              **\n");
-  Serial.printf("*****************************************\n");
+  Logger::Log("\n\n*****************************************\n");
+  Logger::Log("**    Stm32 Command Line Interpreter   **\n");
+  Logger::Log("**            V1.0 / 2021              **\n");
+  Logger::Log("*****************************************\n");
   termUnHighLight();
-  Serial.printf("\n");
+  Logger::Log("\n");
   termPrompt();
   _flagInitIsDone = true;
 }
@@ -78,12 +82,6 @@ int CommandLine::readNextChar(uint8_t &chr) {
     chr = key;
     return _SUCCESS_;
   }
-
-  // if (!_keyBuffer.isEmpty()) {
-  // 	chr = _keyBuffer.dequeue();
-  // 	return _SUCCESS_;
-  // }
-
   return _FAIL_;
 }
 
@@ -97,7 +95,7 @@ void CommandLine::accumulateChar(uint8_t chr) {
   _cmdBuffer.at(_cmdPos) = chr;
   incCmdPos();
   termInsert(1u);
-  Serial.write(&chr, 1);
+  Logger::Putchar(chr);
 }
 
 void CommandLine::procSqrEscKeys(void) {
@@ -159,11 +157,10 @@ void CommandLine::moveCmdLeft(uint8_t startPos) {
 void CommandLine::procEnter(void) {
   _history.add(_cmdBuffer);
   _history.resShowPos();
-
   if (_cmdBuffer.at(0) == '\0') { // line empty?
-    Serial.printf("\n\0");
+    Logger::Log("\n\0");
   } else {
-    bool result = _interpret.doit(_cmdBuffer);
+    bool result = _interpreter->doit(_cmdBuffer);
     if (!result) {
       Logger::Log("\nUnknown command.\n\0");
     } else {

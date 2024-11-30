@@ -1,12 +1,14 @@
 #ifndef MQTTHELPER_H
 #define MQTTHELPER_H
 
-// #pragma once
+#pragma once
+
 #include <Arduino.h>
 #include <Config.h>
 #include <IPAddress.h>
 #include <WiFi.h>
 #include <string>
+#include <MeasurementPivot.h>
 
 namespace wifi {
 
@@ -34,7 +36,11 @@ public:
   }
   void stopWifi() { WiFi.disconnect(); }
 
-  //void pubishMeasurements(msmnt::MeasurementPivot *measurementPivot);
+  void pubishMeasurements(msmnt::MeasurementPivot *measurementPivot);
+  
+  void reportRelayState(uint8_t relayNr, bool state);
+  void reportRelaysAvailability(bool isAvailable);
+
   int publishLog(uint8_t *message, uint16_t size);
   int publishLog(std::string message);
   void printMqttConf();

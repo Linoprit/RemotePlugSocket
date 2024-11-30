@@ -11,7 +11,6 @@
 #include "ComLineConfig.h"
 #include "History.h"
 #include <Arduino.h>
-#include <CommandLine/Interpreter.h>
 #include <Logger.h>
 
 
@@ -43,97 +42,92 @@ constexpr uint8_t _KEY_END_MINICOM2 = '\x46';
 
 class CommandLine {
 public:
-  CommandLine();
+  CommandLine(){};
+  CommandLine(IfcInterpreter* interpreter);
   virtual ~CommandLine(){};
 
-  void init();
+  void init(IfcInterpreter* interpreter);
   static CommandLine &instance(void);
   void splash(void);
   void cycle(void);
 
   bool isInitDone(void) { return _flagInitIsDone; }
-  Interpreter *getInterpreter() { return &_interpret; }
 
   // must be called by the serial callback
   inline void putChar(uint8_t chr) {
     xQueueSendToBack(_keyBufferQueue, &chr, 5);
-
-    // if (!_keyBuffer.isFull()) {
-    //   _keyBuffer.enqueue(chr);
-    // }
   }
 
   // Terminal control functions
   static void termDisplayClear() {
-    Serial.printf("\033[2J");
+    Logger::Log("\033[2J");
   }; // terminal clear all
-  static void termResetCursor() { Serial.printf("\033[H"); }; // cursor reset
+  static void termResetCursor() { Logger::Log("\033[H"); }; // cursor reset
   static void termHideCursor() {
-    Serial.printf("\033[?25l");
+    Logger::Log("\033[?25l");
   }; // cursor invisible
   static void termShowCursor() {
-    Serial.printf("\033[?25h");
+    Logger::Log("\033[?25h");
   };                                                         // cursor visible
-  static void termHighLight() { Serial.printf("\033[7m"); }; // reverse display
+  static void termHighLight() { Logger::Log("\033[7m"); }; // reverse display
   static void termUnHighLight() {
-    Serial.printf("\033[27m");
+    Logger::Log("\033[27m");
   };                                                      // normal display
-  static void termPos1() { Serial.printf("\r\033[1A"); }; // cursor to pos1
+  static void termPos1() { Logger::Log("\r\033[1A"); }; // cursor to pos1
   static void termDelete(uint8_t n) {
-    Serial.printf("\033[%dP", n);
+    Logger::Log("\033[%dP", n);
   }; // Del n chars
   static void termInsert(uint8_t n) {
-    Serial.printf("\033[%d@", n);
+    Logger::Log("\033[%d@", n);
   }; // Ins n chars
   static void termMoveUp(uint8_t n) {
-    Serial.printf("\033[%dA", n);
+    Logger::Log("\033[%dA", n);
   }; // cursor move up
   static void termMoveDown(uint8_t n) {
-    Serial.printf("\033[%dB", n);
+    Logger::Log("\033[%dB", n);
   }; // cursor move down
   static void termMoveLeft(uint8_t n) {
-    Serial.printf("\033[%dD", n);
+    Logger::Log("\033[%dD", n);
   }; // cursor move left
   static void termMoveRight(uint8_t n) {
-    Serial.printf("\033[%dC", n);
+    Logger::Log("\033[%dC", n);
   }; // cursor move right
   static void termMoveToCol(uint8_t n) {
-    Serial.printf("\0338%dG", n);
+    Logger::Log("\0338%dG", n);
   }; // Move cursor to column n
   static void termInsLines(uint8_t n) {
-    Serial.printf("\0338%dL", n);
+    Logger::Log("\0338%dL", n);
   }; // Insert n blank lines
   static void termDelLines(uint8_t n) {
-    Serial.printf("\0338%dM", n);
+    Logger::Log("\0338%dM", n);
   }; // Delete n lines
   static void termEraseChars(uint8_t n) {
-    Serial.printf("\033[%dX", n);
+    Logger::Log("\033[%dX", n);
   }; // Erase n characters
   static void termMoveUpRows(uint8_t n) {
-    Serial.printf("\033[%dF", n);
+    Logger::Log("\033[%dF", n);
   }; // Move cursor up n rows, to col 1
   static void termMoveDownRows(uint8_t n) {
-    Serial.printf("\033[%dE", n);
+    Logger::Log("\033[%dE", n);
   }; // Move cursor down n rows, to col 1
   static void termMoveTo(uint8_t x, uint8_t y) {
-    Serial.printf("\033[%d;%dH", x, y);
+    Logger::Log("\033[%d;%dH", x, y);
   }; // cursor move to
      //	0 erase from cursor to end of display,
      //  1 erase from start of display to cursor,
      // 2 erase display
-  static void termEraseDisplay(uint8_t n) { Serial.printf("\033[%dJ", n); };
+  static void termEraseDisplay(uint8_t n) { Logger::Log("\033[%dJ", n); };
   //	0 erase from cursor to end of line,
   //  1 erase from start of line to cursor,
   //  2 erase line
-  static void termEraseLine(uint8_t n) { Serial.printf("\033[%dK", n); };
+  static void termEraseLine(uint8_t n) { Logger::Log("\033[%dK", n); };
   static void termPrompt() { Logger::Putchar('>'); };
 
 protected:
-  // SimpleQueue<uint8_t> _keyBuffer;
   QueueHandle_t _keyBufferQueue;
 
   History _history;
-  Interpreter _interpret;
+  IfcInterpreter* _interpreter;
   CmdBufferType _cmdBuffer;
   uint8_t _cmdPos;
   bool _flagInitIsDone;

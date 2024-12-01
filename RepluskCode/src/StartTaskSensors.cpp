@@ -3,7 +3,7 @@
 #include <BH1750Helper.h>
 #include <Ds1820Helper.h>
 #include <Config.h>
-#include <DigitalIo/DigitalIo.h>
+#include <DigitalIo.h>
 #include "Config.h"
 #include <Sensors.h>
 

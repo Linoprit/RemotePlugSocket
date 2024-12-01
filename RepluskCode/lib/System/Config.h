@@ -16,6 +16,8 @@ constexpr uint8_t RELAY_CH3 = 33;
 constexpr uint8_t RELAY_CH4 = 32;
 constexpr uint8_t PUSH_BTTN = 18;
 
+constexpr uint8_t MAX_RELAY_COUNT = 4;
+
 // ******* DS18B20 device *******
 // Conversion precision in bit
 constexpr uint8_t DS18B20_PRECISION = 12;

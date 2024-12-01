@@ -13,6 +13,8 @@ namespace wifi {
 
 using namespace msmnt;
 
+bool MqttHelper::_mqttIsConnected = false;
+
 /// begin Mqtt callbacks and timer
 AsyncMqttClient mqttClient;
 TimerHandle_t mqttReconnectTimer;
@@ -51,7 +53,7 @@ void onMqttConnect(bool sessionPresent) {
   Logger::Log("Subscribing to '%s', got ID %lu\n",
               wifi::MqttHelper::instance()._mqttSubCmd, result);
 
-  // gpio::GpioInOut::instance().setLedConnected();
+  MqttHelper::instance().setMqttConnected(true);
 }
 
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
@@ -59,7 +61,7 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
   if (WiFi.isConnected()) {
     xTimerStart(mqttReconnectTimer, 0);
   }
-  // gpio::GpioInOut::instance().clrLedConnected();
+  MqttHelper::instance().setMqttConnected(false);
 }
 
 void onMqttPublish(uint16_t packetId) {
@@ -149,10 +151,8 @@ void MqttHelper::printMqttConf() {
 void MqttHelper::pubishMeasurements(MeasurementPivot *measurementPivot) {
   uint8_t publishCount = 0;
 
-  // uint64: 20, float: 6, spaces: 1, EOL: 1
+  // Calculation length: uint64: 20, float: 6, spaces: 1, EOL: 1
   char buff[30];
-
-  // digitIo::DigitalIo::TglPin(LED_DEBUG);
 
   measurementPivot->ResetIter();
   Measurement *actMeasurement = measurementPivot->GetNextMeasurement();
@@ -177,7 +177,6 @@ void MqttHelper::pubishMeasurements(MeasurementPivot *measurementPivot) {
   }
   Logger::Log("(%lu) Published %i sensors.\n", OsHelpers::GetTickSeconds(),
               publishCount);
-  // digitIo::DigitalIo::TglPin(LED_DEBUG);
 }
 
 void MqttHelper::reportRelayState(uint8_t relayNr, bool state) {

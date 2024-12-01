@@ -1,7 +1,7 @@
 #include <AppTypes.h>
 #include <Arduino.h>
 #include <Config.h>
-#include <DigitalIo/DigitalIo.h>
+#include <DigitalIo.h>
 #include <Logger.h>
 
 namespace digitIo {
@@ -31,6 +31,18 @@ void DigitalIo::SetPin(uint8_t pin, bool state) {
   digitalWrite(pin, (uint8_t)state);
 }
 void DigitalIo::TglPin(uint8_t pin) { digitalWrite(pin, !digitalRead(pin)); }
+
+bool DigitalIo::ButtonLongPress() {
+  return _pushButton.LastEvent() == EventEnum::evntHeld;
+}
+
+bool DigitalIo::ButtonPress() {
+  return _pushButton.LastEvent() == EventEnum::evntPressed;
+}
+
+bool DigitalIo::ButtonReleased() {
+  return _pushButton.LastEvent() == EventEnum::evntReleased;
+}
 
 void DigitalIo::SetRelayState(uint8_t relayNr, uint8_t state) {
   uint8_t relayChannel = ToRelayChannel(relayNr);

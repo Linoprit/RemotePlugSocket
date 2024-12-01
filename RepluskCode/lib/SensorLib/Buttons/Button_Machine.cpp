@@ -13,7 +13,8 @@ namespace digitIo {
 ButtonMachine::ButtonMachine(uint8_t pin, bool groundIsOn) {
   _state = off;
   _oldTicks = 0;
-  LastEvent = EventEnum::evntReleased;
+  _lastEvent = EventEnum::evntReleased;
+  _oldEvent = EventEnum::evntReleased;
   _pin = pin;
   _groundIsOn = groundIsOn;
 }
@@ -29,31 +30,36 @@ EventEnum ButtonMachine::Cycle() {
   if ((_state == off) && (buttonIsPressed)) {
     _state = on;
     _oldTicks = OsHelpers::GetTickMillis();
-    LastEvent = evntReleased;
+    _oldEvent = _lastEvent;
+    _lastEvent = evntReleased;
   }
 
   else if ((_state == on) && (buttonIsPressed) &&
            (OsHelpers::GetTickMillis() - _oldTicks > debounceTicks)) {
     _state = pressed;
-    LastEvent = evntPressed;
+    _oldEvent = _lastEvent;
+    _lastEvent = evntPressed;
   }
 
   else if ((_state == pressed) && (buttonIsPressed) &&
            (OsHelpers::GetTickMillis() - _oldTicks > btnHeldTicks)) {
     _state = held;
-    LastEvent = evntHeld;
+    _oldEvent = _lastEvent;
+    _lastEvent = evntHeld;
   }
 
   else if (((_state == pressed) || (_state == held)) && (!buttonIsPressed)) {
     _state = off;
-    LastEvent = evntReleased;
+    _oldEvent = _lastEvent;
+    _lastEvent = evntReleased;
   }
 
   else if ((_state == on) && (!buttonIsPressed)) {
     _state = off;
-    LastEvent = evntReleased;
+    _oldEvent = _lastEvent;
+    _lastEvent = evntReleased;
   }
-  return LastEvent;
+  return _lastEvent;
 }
 
 } // namespace digitIo

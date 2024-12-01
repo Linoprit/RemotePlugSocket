@@ -5,18 +5,19 @@
  *      Author: harald
  */
 
+#include "Interpreter.h"
+#include <ComLineConfig.h>
 #include <CommandLine.h>
-#include "CommandLine/Interpreter.h"
+#include <CrcSocket.h>
+#include <DigitalIo.h>
+#include <IPAddress.h>
+#include <LittleFsHelpers.h>
+#include <Logger.h>
 #include <Measurement.h>
 #include <MqttHelper.h>
-#include <ComLineConfig.h>
-#include <CrcSocket.h>
-#include <DigitalIo/DigitalIo.h>
-#include <LittleFsHelpers.h>
-#include <IPAddress.h>
 #include <OsHelpers.h>
 #include <Sensors.h>
-#include <Logger.h>
+#include <StateMachine.h>
 #include <cstring>
 
 namespace cLine {
@@ -120,7 +121,7 @@ bool Interpreter::storeMqttHost(Lexer *lex) {
     UInt64Token *intToken = (UInt64Token *)lex->getNextToken();
     if (intToken->getType() != Token::UInt64) {
       Logger::Log("\nUsage: storeMqttHost <int> <int> <int> <int>. (i.e. 192 "
-                    "168 15 2)\n");
+                  "168 15 2)\n");
       return false;
     }
     hostAddress[i] = (uint8_t)intToken->getVal();
@@ -152,7 +153,14 @@ bool Interpreter::storeMqttPort(Lexer *lex) {
 }
 
 bool Interpreter::doSwitch(Lexer *lex) {
-  bool isError = false;
+  bool stmStateIsAuto = stm::StateMachine::instance().getCurrentState() ==
+                        stm::StateMachine::StateEnm::stauto;
+
+  if (!stmStateIsAuto){
+    Logger::Log("\nState is NOT auto, ignoring switch-command\n");
+  }
+
+    bool isError = false;
   UInt64Token *intToken = (UInt64Token *)lex->getNextToken();
   if (intToken->getType() != Token::UInt64) {
     isError = true;
@@ -165,7 +173,7 @@ bool Interpreter::doSwitch(Lexer *lex) {
   }
   uint16_t onOrOff = (uint16_t)intToken->getVal();
 
-  if ((relayNr > 3) || (onOrOff > 1)) {
+  if ((relayNr > (MAX_RELAY_COUNT - 1)) || (onOrOff > 1)) {
     isError = true;
   }
 
@@ -174,9 +182,9 @@ bool Interpreter::doSwitch(Lexer *lex) {
     return false;
   } else {
     digitIo::DigitalIo::SetRelayState(relayNr, onOrOff);
-    
+
     bool state = digitIo::DigitalIo::GetRelayState(relayNr);
-    wifi::MqttHelper::instance().reportRelayState(relayNr, state); 
+    wifi::MqttHelper::instance().reportRelayState(relayNr, state);
   }
   return true;
 }
@@ -193,7 +201,7 @@ bool Interpreter::setMqttHost(Lexer *lex) {
     UInt64Token *intToken = (UInt64Token *)lex->getNextToken();
     if (intToken->getType() != Token::UInt64) {
       Logger::Log("\nUsage: setMqttHost <int> <int> <int> <int>. (i.e. 192 "
-                    "168 15 2)\n");
+                  "168 15 2)\n");
       return false;
     }
     hostAddress[i] = (uint8_t)intToken->getVal();
@@ -221,9 +229,9 @@ bool Interpreter::getMacAddress() {
   uint8_t macBuff[6];
   OsHelpers::GetMacAddress(macBuff);
   Logger::Log("\nDEC %i:%i:%i:%i:%i:%i ", macBuff[0], macBuff[1], macBuff[2],
-                macBuff[3], macBuff[4], macBuff[5]);
+              macBuff[3], macBuff[4], macBuff[5]);
   Logger::Log("(HEX %02x:%02x:%02x:%02x:%02x:%02x)\n", macBuff[0], macBuff[1],
-        macBuff[2], macBuff[3], macBuff[4], macBuff[5]);
+              macBuff[2], macBuff[3], macBuff[4], macBuff[5]);
   return true;
 }
 
@@ -386,7 +394,8 @@ bool Interpreter::setSensId(Lexer *lex) {
     Logger::Log("\nUpdateConfig done.\n");
   } else {
     std::string stationId = msmnt::Measurement::DumpSensId(sensConf.sensorId);
-    Logger::Log("\nSensId ignored: %llu (%s)\n",sensConf.sensorId, stationId.c_str());
+    Logger::Log("\nSensId ignored: %llu (%s)\n", sensConf.sensorId,
+                stationId.c_str());
   }
 
   return true;

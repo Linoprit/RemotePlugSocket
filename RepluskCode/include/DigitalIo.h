@@ -16,7 +16,10 @@ public:
   void InitHardware();
   void Cycle();
 
-  EventEnum GetPushButtonState(){ return _pushButton.LastEvent; }
+  bool ButtonLongPress();
+  bool ButtonPress();
+  bool ButtonReleased();
+
   static void SetPin(uint8_t pin, bool state);
   static void TglPin(uint8_t pin);
   

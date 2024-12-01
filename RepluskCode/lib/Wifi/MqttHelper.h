@@ -21,6 +21,9 @@ public:
   static MqttHelper &instance(void);
   void MqttSetup();
 
+  void setMqttConnected(bool isConnected) { _mqttIsConnected = isConnected; }
+  bool isMqttConnected() { return _mqttIsConnected; }
+
   void setMqttHost(IPAddress ipAddress) { _mqttHost = ipAddress; };
   void setMqttPort(uint16_t port) { _mqttPort = port; };
 
@@ -53,12 +56,13 @@ public:
   char *_mqttSubCmd;
 
 private:
+  static bool _mqttIsConnected;
+
   IPAddress _mqttHost;
   uint16_t _mqttPort;
   char *_mqttPubSens;
   char *_mqttPubLog;
   bool _DoSerialPrint;
-  bool _mqttIsConnected;
 
   void copyMqttPath(char *buffer, std::string spot, const char *mqttSuffix,
                     size_t mqttLen);

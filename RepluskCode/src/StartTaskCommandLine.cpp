@@ -1,6 +1,6 @@
 #include "TasksCommon.h"
 #include <Arduino.h>
-#include <CommandLine/Interpreter.h>
+#include <Interpreter.h>
 // #include <ComLineConfig.h>
 #include <CommandLine.h>
 

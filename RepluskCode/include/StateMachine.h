@@ -32,6 +32,7 @@ public:
   void cycle();
 
 private:
+  uint32_t _oldTickSeconds;
   StateEnm _currState;
   bool _isEntry;
 	bool _buttonWasHeld;
@@ -39,7 +40,8 @@ private:
   digitIo::DigitalIo _dio;
 
   void switchState(StateEnm newState);
-	void reportAvailable();
+	void reportIsAvailable();
+  void reportAvailableCycle();
 
   void stAus();
   void stManuallyOff();

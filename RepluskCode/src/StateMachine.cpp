@@ -17,15 +17,32 @@ namespace stm {
 
 StateMachine::StateMachine()
     : _currState(StateEnm::aus), _isEntry(true), _buttonWasHeld(false)
-      //_buttonWasPressed(false) 
-			{}
+//_buttonWasPressed(false)
+{
+  _oldTickSeconds = OsHelpers::GetTickSeconds();
+}
 
 void StateMachine::initHardware() {
   _dio.InitHardware();
-  reportAvailable();
+  reportIsAvailable();
 }
 
-void StateMachine::reportAvailable() {
+void StateMachine::reportAvailableCycle() {
+  uint32_t actTickSeconds = OsHelpers::GetTickSeconds();
+  if (actTickSeconds - _oldTickSeconds < 300) {
+    return;
+  }
+  
+  _oldTickSeconds = actTickSeconds;
+
+  if (_currState == StateEnm::stauto){
+    reportIsAvailable();
+  } else{
+    wifi::MqttHelper::instance().reportRelaysAvailability(false);
+  }  
+}
+
+void StateMachine::reportIsAvailable() {
   wifi::MqttHelper::instance().reportRelaysAvailability(true);
   for (int32_t i = 0; i < MAX_RELAY_COUNT; i++) {
     bool state = digitIo::DigitalIo::GetRelayState(i);
@@ -34,6 +51,7 @@ void StateMachine::reportAvailable() {
 }
 
 void StateMachine::cycle() {
+  reportAvailableCycle();
   _dio.Cycle(); // pushbutton
 
   switch (_currState) {
@@ -67,7 +85,7 @@ void StateMachine::cycle() {
       switchState(StateEnm::manOn);
     } else if (tsDisConnected()) {
       switchState(StateEnm::aus);
-    } 
+    }
     break;
 
   default:
@@ -118,7 +136,7 @@ void StateMachine::stAuto() {
   if (_isEntry) {
     _isEntry = false;
     _dio.SetPin(LED_STATUS, true);
-    reportAvailable();
+    reportIsAvailable();
     Logger::Log("\nState is AUTO.");
   }
   /* code */
@@ -142,7 +160,7 @@ bool StateMachine::tsButtonLong() {
   }
   if (_dio.ButtonReleased() && _buttonWasHeld) {
     _buttonWasHeld = false;
-		//_buttonWasPressed = false;
+    //_buttonWasPressed = false;
     return true;
   }
   return false;

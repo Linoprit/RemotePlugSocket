@@ -156,11 +156,12 @@ bool Interpreter::doSwitch(Lexer *lex) {
   bool stmStateIsAuto = stm::StateMachine::instance().getCurrentState() ==
                         stm::StateMachine::StateEnm::stauto;
 
-  if (!stmStateIsAuto){
+  if (!stmStateIsAuto) {
     Logger::Log("\nState is NOT auto, ignoring switch-command\n");
+    return true;
   }
 
-    bool isError = false;
+  bool isError = false;
   UInt64Token *intToken = (UInt64Token *)lex->getNextToken();
   if (intToken->getType() != Token::UInt64) {
     isError = true;

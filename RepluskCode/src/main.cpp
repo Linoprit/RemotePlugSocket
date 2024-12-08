@@ -42,21 +42,6 @@ void setup() {
 void loop() {
   stm::StateMachine::instance().cycle();
   delay(10);
-
-  //
-  // ToDo: do something with the ButtonState
-  // if (cycleCount >= 500) {
-  //   cycleCount = 0;
-  //   Logger::Log("Button state is: ");
-  //   if (dio.GetPushButtonState() == digitIo::EventEnum::evntReleased) {
-  //     Logger::Log("Released.\n");
-  //   } else if (dio.GetPushButtonState() == digitIo::EventEnum::evntPressed)
-  //   {
-  //     Logger::Log("Pressed.\n");
-  //   } else if (dio.GetPushButtonState() == digitIo::EventEnum::evntHeld) {
-  //     Logger::Log("Held.\n");
-  //   }
-  // }
 }
 
 // ToDo Logging auch auf Mqtt publishen.
